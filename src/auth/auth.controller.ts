@@ -7,10 +7,10 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post("signup")
-  signup(@Body() dto: AuthDto) {
-    console.log({
-      dto,
-    });
+  signup(@Body() dto: AuthDto): {
+    message: string;
+  } {
+    console.log({ dto });
     return this.authService.register();
   }
 
