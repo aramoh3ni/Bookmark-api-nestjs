@@ -37,3 +37,15 @@ lerna-debug.log*
 
 # API TEST
 rest.http
+
+# ENVIRNMENT FILE
+.env
+
+
+# DOCKER
+*.dockerignore
+/docker-compose.yml
+/Dockerfile
+
+# Prisma
+/prisma
