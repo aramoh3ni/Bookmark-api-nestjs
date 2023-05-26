@@ -1,14 +1,14 @@
-import { Controller, Get, Req, UseGuards } from "@nestjs/common";
-import { Request } from "express";
+import { Controller, Get, UseGuards } from "@nestjs/common";
+import { User } from "@prisma/client";
+import { GetUser } from "src/auth/decorator";
 import { JwtGuard } from "src/auth/guard";
-// import { User } from "@prisma/client";
 
+@UseGuards(JwtGuard) // to make all endpoint protected.
 @Controller("users")
 export class UserController {
-  @UseGuards(JwtGuard)
+  // @UseGuards(JwtGuard) // make only only endpoint protected.
   @Get("me")
-  getMe(@Req() req: Request): string {
-    console.log(req.user);
-    return "my user";
+  getMe(@GetUser() user: User): User {
+    return user;
   }
 }
