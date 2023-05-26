@@ -8,6 +8,7 @@ export class UserController {
   @UseGuards(AuthGuard("jwt"))
   @Get("me")
   getMe(@Req() req: Request): string {
+    console.log(req.user);
     return "my user";
   }
 }
