@@ -1,19 +1,22 @@
-import { Controller, Get, Patch, UseGuards } from "@nestjs/common";
+import { Controller, Get, Body, UseGuards, Put } from "@nestjs/common";
+import { UserService } from "./user.service";
+import { JwtGuard } from "../auth/guard";
+import { GetUser } from "../auth/decorator";
 import { User } from "@prisma/client";
-import { GetUser } from "src/auth/decorator";
-import { JwtGuard } from "src/auth/guard";
+import { EditUserDTO } from "./dto";
 
-@UseGuards(JwtGuard) // to make all endpoint protected.
+@UseGuards(JwtGuard)
 @Controller("users")
 export class UserController {
-  // @UseGuards(JwtGuard) // make only only endpoint protected.
+  constructor(private userService: UserService) {}
+
   @Get("me")
-  getMe(@GetUser() user: User): User {
+  getMyAccount(@GetUser() user: User) {
     return user;
   }
 
-  @Patch("me")
-  editMe(@GetUser() user: User): User {
-    return user;
+  @Put()
+  updateUser(@GetUser("id") userId: string, @Body() dto: EditUserDTO) {
+    return this.userService.updateUser(userId, dto);
   }
 }

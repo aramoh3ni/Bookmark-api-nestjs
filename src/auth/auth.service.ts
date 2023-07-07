@@ -1,11 +1,9 @@
-import { Injectable, ForbiddenException } from "@nestjs/common";
+import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { JwtService } from "@nestjs/jwt/dist";
-import { ConfigService } from "@nestjs/config/dist/config.service";
-import { AuthDto } from "./dto";
+import { JwtService } from "@nestjs/jwt";
+import { SignUpDTO, SignInDTO } from "./dto";
 import * as argon from "argon2";
-// import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
-
+import { ConfigService } from "@nestjs/config";
 @Injectable()
 export class AuthService {
   constructor(
@@ -14,62 +12,78 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async login(dto: AuthDto) {
-    const { email, password } = dto;
-    //find the user by email
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    // throw an exception if the user does not exist
-    if (!user) throw new ForbiddenException("Invalid Credential");
-
-    // compare the password against
-    const isMatch = await argon.verify(user.hash, password);
-    // throw an error if password does not match
-    if (!isMatch) throw new ForbiddenException("Invalid Credential");
-
-    return this.signToken(user.id, user.email);
-  }
-
-  async register(dto: AuthDto) {
+  async signup(dto: SignUpDTO) {
+    // TODO: generate the password hash
     const hash = await argon.hash(dto.password);
+
     try {
-      const ifUserExists = await this.prisma.user.findUnique({
-        where: { email: dto.email },
-      });
-
-      if (ifUserExists) throw new ForbiddenException("Credentials Taken");
-
+      // TODO: save the new user
       const user = await this.prisma.user.create({
         data: {
+          firstName: dto.firstName,
+          lastName: dto.lastName,
           email: dto.email,
-          hash: hash,
-          // firstName: dto.firstName,
-          // lastName: dto.lastName,
+          password: hash,
+        },
+        select: {
+          // temporary solution instead we will use transformer
+          id: true,
+          email: true,
         },
       });
+
+      // TODO: return the saved user
       return this.signToken(user.id, user.email);
     } catch (error) {
-      if (error.code === "P2002")
-        throw new ForbiddenException("Credentials taken");
+      if (error.code === "P2002") {
+        throw new ForbiddenException("Credentials Taken");
+      }
 
       throw error;
     }
   }
 
-  async signToken(
-    userId: number,
-    email: string,
-  ): Promise<{ access_token: string }> {
-    const payload = { sub: userId, email };
-
-    const secret = this.config.get("JWT_SECRET_KEY");
-
-    const token = await this.jwt.signAsync(payload, {
-      expiresIn: "15m",
-      secret,
+  async signin(dto: SignInDTO) {
+    // TODO: find the user through email address
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: dto.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+      },
     });
 
-    return { access_token: token };
+    if (!user) throw new ForbiddenException("Credential Error");
+
+    // TODO: compare hashed and user saved password
+    const IsPwdMatched = await argon.verify(user.password, dto.password);
+
+    if (!IsPwdMatched) throw new ForbiddenException("Credential Error");
+    // TODO: return user
+    return this.signToken(user.id, user.email);
+  }
+
+  async signToken(
+    userId: string,
+    email: string,
+  ): Promise<{ accessToken: string }> {
+    const jwtSecret = this.config.get("JWT_SECRET_KEY");
+
+    const payload = {
+      sub: userId,
+      email,
+    };
+
+    const token = await this.jwt.sign(payload, {
+      expiresIn: "15m",
+      secret: jwtSecret,
+    });
+
+    return {
+      accessToken: token,
+    };
   }
 }
