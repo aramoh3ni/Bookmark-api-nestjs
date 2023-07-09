@@ -13,11 +13,9 @@ export class AuthService {
   ) {}
 
   async signup(dto: SignUpDTO) {
-    // TODO: generate the password hash
     const hash = await argon.hash(dto.password);
 
     try {
-      // TODO: save the new user
       const user = await this.prisma.user.create({
         data: {
           firstName: dto.firstName,
@@ -32,7 +30,6 @@ export class AuthService {
         },
       });
 
-      // TODO: return the saved user
       return this.signToken(user.id, user.email);
     } catch (error) {
       if (error.code === "P2002") {
@@ -80,6 +77,7 @@ export class AuthService {
     const token = await this.jwt.sign(payload, {
       expiresIn: "15m",
       secret: jwtSecret,
+      algorithm: "RS256",
     });
 
     return {
