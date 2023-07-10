@@ -9,12 +9,14 @@ import {
   ParseUUIDPipe,
   Post,
   Put,
+  SetMetadata,
   UseGuards,
 } from "@nestjs/common";
 import { BookmarkService } from "./bookmark.service";
 import { BookmarkDTO, EditBookmarkDTO } from "./dto";
 import { JwtGuard } from "../auth/guard";
 import { GetUser } from "../auth/decorator";
+import { Roles } from "@prisma/client";
 
 @UseGuards(JwtGuard)
 @Controller("bookmarks")
@@ -54,9 +56,10 @@ export class BookmarkController {
 
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
+  @SetMetadata("roles", [Roles.Admin, Roles.SuperAdmin])
   deleteBookmark(
     @GetUser("id") userId: string,
-    @Param("id", ParseUUIDPipe) bookmarkId: string,
+    @Param("id") bookmarkId: string,
   ) {
     return this.bookmarkService.deleteBookmarkById(userId, bookmarkId);
   }

@@ -77,7 +77,6 @@ export class AuthService {
     const token = await this.jwt.sign(payload, {
       expiresIn: "15m",
       secret: jwtSecret,
-      algorithm: "RS256",
     });
 
     return {

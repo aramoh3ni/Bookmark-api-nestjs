@@ -66,6 +66,9 @@ export class BookmarkService {
         id: bookmarkId,
       },
     });
+
+    if (!bookmark) throw new NotFoundException("Not Found");
+
     if (bookmark.userId !== userId)
       throw new UnauthorizedException("Access to resource denied.");
 
